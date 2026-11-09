@@ -1,0 +1,49 @@
+version: 2
+
+seeds:
+  - name: spam_referrers
+    description: Curated list of adware / pop-under / traffic-exchange domains used to flag spam sessions.
+    columns:
+      - name: referrer_domain
+        data_tests: [unique, not_null]
+
+  - name: internal_customers
+    description: Staff / test accounts whose bookings are excluded from KPIs.
+    columns:
+      - name: customer_id
+        data_tests: [unique, not_null]
+
+  - name: channel_cpc
+    description: Assumed cost per click (EUR) per paid channel, used when no ad-platform export exists.
+    columns:
+      - name: channel_group
+        data_tests: [unique, not_null]
+
+  - name: ads_campaign_export
+    description: >
+      Cleaned ad-platform campaign export (synthetic). Used for a realistic Paid Display CPC.
+      Cost / CPC are in EUR.
+    columns:
+      - name: campaign_name
+        data_tests: [not_null]
+      - name: channel_group
+        data_tests: [not_null]
+      - name: avg_cpc
+        data_tests: [not_null]
+      - name: cost
+        data_tests: [not_null]
+
+  - name: offline_bookings
+    description: >
+      Anonymised offline (chat / phone) bookings that never touched the website. Added as a
+      seed so revenue reflects demand outside the web funnel. No customer names. IDs 9001+
+      are reserved for this seed.
+    columns:
+      - name: booking_id
+        data_tests: [unique, not_null]
+      - name: booked_date
+        data_tests: [not_null]
+      - name: destination_name
+        data_tests: [not_null]
+      - name: status
+        data_tests: [not_null]

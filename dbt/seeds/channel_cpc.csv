@@ -1,0 +1,5 @@
+channel_group,cpc,notes
+Paid Display,0.10,Assumed cost per click in EUR for Performance Max / Display / partner placements.
+Paid Video,0.30,Assumed cost per click in EUR for video placements.
+Paid Search,0.85,Assumed cost per click in EUR for Search.
+Paid Other,0.40,Assumed cost per click in EUR for other paid click types.

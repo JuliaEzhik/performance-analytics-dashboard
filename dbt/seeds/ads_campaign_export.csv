@@ -1,0 +1,2 @@
+campaign_name,campaign_status,campaign_type,period_start,period_end,clicks,impressions,ctr,currency,avg_cpc,cost,conversions,cost_per_conversion,conversion_rate,channel_group
+Campaign #1,Paused,Performance Max,2025-07-09,2025-07-31,1180,21450,0.0550,EUR,0.07,82.60,0.0,0.00,0.0000,Paid Display

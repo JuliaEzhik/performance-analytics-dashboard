@@ -1,0 +1,156 @@
+version: 2
+
+models:
+  - name: gold_fct_sessions
+    description: >
+      Session fact for reporting: one row per external session (internal / debug traffic removed),
+      with business-friendly dimensions (week, month, landing page type) and booking funnel flags.
+      The Streamlit dashboard filters and aggregates this table directly.
+    columns:
+      - name: session_key
+        data_tests: [unique, not_null]
+      - name: user_pseudo_id
+        data_tests: [not_null]
+      - name: session_date
+        data_tests: [not_null]
+      - name: channel_group
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Paid Search', 'Paid Display', 'Paid Video', 'Paid Other', 'Spam Referral', 'Display',
+                         'AI Assistant', 'Organic Search', 'Organic Social', 'Email', 'Direct', 'Referral', 'Unassigned']
+      - name: landing_page_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Home', 'Trip page', 'Account', 'Other']
+
+  - name: gold_fct_bookings
+    description: >
+      One row per current backend booking created in the reporting window, plus seeded offline
+      (chat / phone) bookings. Customer names are not carried into gold. Successful = approved /
+      confirmed / completed. Web attribution is attached when booking_submit_success fired for
+      the same booking id (not for offline seed rows).
+    columns:
+      - name: booking_id
+        data_tests: [unique, not_null]
+      - name: booked_date
+        data_tests: [not_null]
+      - name: status
+        data_tests: [not_null]
+      - name: is_seeded_booking
+        description: True for offline bookings loaded from seeds/offline_bookings.csv.
+      - name: session_key
+        description: Web session when the booking was tracked; NULL if analytics missed it or for seed rows.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('gold_fct_sessions')
+                field: session_key
+
+  - name: gold_agg_daily_kpis
+    description: Daily website KPIs with one row for every calendar day, plus 7-day rolling values.
+    columns:
+      - name: report_date
+        data_tests: [unique, not_null]
+      - name: engagement_rate
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: booking_submit_rate
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: booking_conversion_rate
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: consent_denied_page_views
+        description: Anonymous page views from visitors who declined cookies (not part of users / sessions).
+
+  - name: gold_agg_booking_funnel
+    description: Sessions that reached at least each booking step, per month, channel and device.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [session_month, channel_group, device_category, step_order]
+    columns:
+      - name: step_order
+        description: "0 Session, 1 Opened booking, 2 Filled booking form, 3 Clicked submit, 4 Booking created."
+
+  - name: gold_agg_channel_performance
+    description: Traffic, engagement and booking metrics per month and channel.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [session_month, channel_group]
+    columns:
+      - name: engagement_rate
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: booking_open_rate
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+
+  - name: gold_agg_page_performance
+    description: Per page path, views and engagement, plus how well sessions landing on the page convert.
+    columns:
+      - name: page_path
+        data_tests: [unique, not_null]
+      - name: landing_booking_open_rate
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+
+  - name: gold_agg_data_quality
+    description: >
+      Snapshot of data-quality issues found in bronze and what silver / gold cleaning changed
+      (duplicates removed, consent-denied / internal / spam flagged or excluded).
+    columns:
+      - name: bronze_events
+        data_tests: [not_null]
+      - name: silver_events
+        data_tests: [not_null]
+      - name: duplicate_events_removed
+        data_tests: [not_null]
+      - name: gold_sessions
+        data_tests: [not_null]
+
+  - name: gold_agg_marketing_kpis
+    description: >
+      Marketing KPI snapshot for the reporting window: leads (opened booking), estimated revenue
+      (EUR from destination list prices), estimated media cost (paid sessions x CPC) and ROAS.
+    columns:
+      - name: leads
+        data_tests: [not_null]
+      - name: estimated_revenue
+        data_tests: [not_null]
+      - name: estimated_media_cost
+        data_tests: [not_null]
+
+  - name: gold_agg_marketing_by_channel
+    description: Channel breakdown of marketing KPIs (leads, revenue, cost, ROAS, CPL).
+    columns:
+      - name: channel_group
+        data_tests: [unique, not_null]
+
+  - name: gold_agg_destination_demand
+    description: Booking-form interest per destination, from selection through submit to created booking.
+    columns:
+      - name: destination_name
+        data_tests: [unique, not_null]

@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: bronze_web_events
+    description: >
+      Bronze layer. An untouched copy of the raw event stream for the reporting window
+      (vars start_date..end_date). Only load metadata columns (prefixed with "_") are added.
+    columns:
+      - name: event_date
+        data_tests: [not_null]
+      - name: event_timestamp
+        description: Event time in microseconds since epoch (UTC).
+        data_tests: [not_null]
+      - name: event_name
+        data_tests: [not_null]
+      - name: user_pseudo_id
+        description: Cookie-based anonymous user identifier. NULL for consent-denied (cookieless) pings.
+      - name: _loaded_at
+        description: When dbt loaded the row.

@@ -1,0 +1,13 @@
+booking_id,booked_date,trip_date,destination_name,destination_price,people,status,booking_channel
+9001,2025-07-03,2025-07-06,Lake Kayak Day,60,2,approved,chat
+9002,2025-07-11,2025-07-13,Sunrise Ridge Hike,45,3,approved,chat
+9003,2025-07-19,2025-07-27,Vineyard Tasting,75,2,approved,chat
+9004,2025-07-26,2025-08-02,Old Town Walking Tour,25,4,approved,chat
+9005,2025-08-02,2025-08-09,Hot Springs Retreat,90,2,approved,chat
+9006,2025-08-09,2025-08-16,Lake Kayak Day,60,2,approved,chat
+9007,2025-08-14,2025-08-17,Cliffside Cable Car,38,5,approved,chat
+9008,2025-08-23,2025-08-30,Canyon & Cave Trip,110,2,approved,chat
+9009,2025-08-30,2025-09-06,Sunrise Ridge Hike,45,2,approved,chat
+9010,2025-09-05,2025-09-13,Glacier Viewpoint,140,2,approved,chat
+9011,2025-09-13,2025-09-20,Vineyard Tasting,75,3,approved,chat
+9012,2025-09-21,2025-09-27,Lake Kayak Day,60,2,approved,chat

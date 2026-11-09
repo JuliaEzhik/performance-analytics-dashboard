@@ -1,0 +1,130 @@
+version: 2
+
+models:
+  - name: silver_events
+    description: >
+      Silver layer, one row per event. Dates / timestamps are parsed, URLs are normalised to a
+      page_path, exact duplicates are removed, and internal / debug / consent-denied traffic is
+      flagged (not removed).
+    columns:
+      - name: event_id
+        description: Hash of user, timestamp, event name and the business fields.
+        data_tests: [unique, not_null]
+      - name: event_date
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: "date '{{ var('start_date') }}'"
+                max_value: "date '{{ var('end_date') }}'"
+      - name: event_ts
+        data_tests: [not_null]
+      - name: event_name
+        data_tests: [not_null]
+      - name: session_key
+        description: "user_pseudo_id.session_id. NULL only for consent-denied (cookieless) pings."
+        data_tests:
+          - not_null:
+              config:
+                where: "not is_consent_denied"
+          - relationships:
+              arguments:
+                to: ref('silver_sessions')
+                field: session_key
+      - name: is_consent_denied
+        description: The visitor declined analytics cookies, so an anonymous ping without user / session IDs was sent.
+      - name: page_path
+        description: Lower-cased path without host, query string, fragment or trailing slash.
+        data_tests:
+          - not_null
+      - name: page_hostname
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['trips.example', 'www.trips.example']
+              config:
+                severity: warn
+      - name: device_category
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['mobile', 'desktop', 'tablet', 'smart tv']
+      - name: booking_step
+        description: "Booking funnel step of this event: 1 opened booking, 2 interacted with form, 3 clicked submit, 4 booking created."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4]
+                quote: false
+      - name: is_debug
+        description: Event came from debug mode or a tag-debugging tool.
+        data_tests: [not_null]
+      - name: is_internal_user
+        description: The user ever opened /admin or used debug tooling (staff).
+        data_tests: [not_null]
+
+  - name: silver_sessions
+    description: >
+      Silver layer, one row per session (consent-denied pings are excluded because they have no
+      session). Includes traffic attribution with a custom channel grouping, landing page,
+      device / geo, engagement, and how far the session got in the booking funnel.
+    columns:
+      - name: session_key
+        data_tests: [unique, not_null]
+      - name: user_pseudo_id
+        data_tests: [not_null]
+      - name: session_date
+        data_tests: [not_null]
+      - name: session_duration_sec
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: source
+        data_tests: [not_null]
+      - name: medium
+        data_tests: [not_null]
+      - name: channel_group
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Internal', 'Paid Search', 'Paid Display', 'Paid Video', 'Paid Other',
+                         'Spam Referral', 'Display', 'AI Assistant', 'Organic Search', 'Organic Social',
+                         'Email', 'Direct', 'Referral', 'Unassigned']
+      - name: referrer_source
+        description: Where the visitor actually came from (referrer / utm source), kept even for paid clicks.
+      - name: gad_source
+        description: Ad click type (1 = Search, 5 = Display / Performance Max / partner sites).
+      - name: is_spam_referrer
+        description: Referrer is on the spam_referrers seed list (adware / pop-under sites, often ad partner placements).
+      - name: max_booking_step
+        description: Furthest booking funnel step reached (0 = none).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2, 3, 4]
+                quote: false
+      - name: is_internal
+        description: Session by an internal user or with debug tooling; excluded from gold KPIs.
+        data_tests: [not_null]
+
+  - name: silver_bookings
+    description: >
+      Backend bookings with destination attached. Historical versions (is_current_version = false)
+      are kept. is_successful is approved / confirmed / completed.
+    columns:
+      - name: booking_id
+        data_tests: [unique, not_null]
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['requested', 'approved', 'confirmed', 'cancelled', 'deleted', 'completed']
+      - name: destination_price
+        description: Parsed from free-text catalogue prices ("€45", "75 EUR").
+        data_tests: [not_null]
+      - name: is_successful
+        data_tests: [not_null]
+      - name: is_internal_booking
+        data_tests: [not_null]

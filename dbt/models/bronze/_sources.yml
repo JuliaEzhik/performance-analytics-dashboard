@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: >
+      Raw tables produced by `data_gen/generate_data.py`. In a real setup these would be
+      loaded by an ingestion job; here they are synthetic.
+    tables:
+      - name: web_events
+        description: Web-analytics style event stream, one row per event.
+      - name: bookings
+        description: Booking backend export, including superseded versions of edited bookings.
+      - name: destinations
+        description: Destination catalogue with free-text prices.
